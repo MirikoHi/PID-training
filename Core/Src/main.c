@@ -45,6 +45,7 @@
 
 /* USER CODE BEGIN PV */
 
+const int MOTOR_ID = 1;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -55,7 +56,19 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+float map(float input, float imin, float imax, float omin, float omax){
+  float output = 0.0f;
+  if(input <= imin){
+    output = omin;
+  }
+  else if(input >= imax){
+    output = omax;
+  }
+  else{
+    output = ((input - imin)/(imax - imin)) * (omax - omin) + omin;
+  }
+  return output;
+}
 /* USER CODE END 0 */
 
 /**
@@ -125,7 +138,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 168;
+  RCC_OscInitStruct.PLL.PLLN = 160;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
