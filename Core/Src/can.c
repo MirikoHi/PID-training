@@ -176,21 +176,28 @@ void CAN_Filter_Config(CAN_HandleTypeDef *hcan, uint8_t Object_Para, uint32_t ID
 
 void CAN_Send_Data(CAN_HandleTypeDef *hcan, uint16_t ID, uint8_t *Data, uint16_t Length)
 {
-  CAN_TxHeaderTypeDef TX_header;
-  uint32_t used_mailbox;
+  CAN_TxHeaderTypeDef TxHeader;   // CAN通信协议头
+  uint32_t TxMailboxX = CAN_TX_MAILBOX0;  // CAN发送邮箱
 
-  // 检测关键传参
-  assert_param(hcan != NULL);
+  TxHeader.StdId = ID; // 标准格式标识符ID
+  
+  TxHeader.ExtId = 0;
+  TxHeader.IDE = CAN_ID_STD;  // 标准帧
+  TxHeader.RTR = CAN_RTR_DATA;    // 传送帧类型为数据帧
+  TxHeader.DLC = Length;    // 数据长度码
 
-  TX_header.StdId = ID;
-  TX_header.ExtId = 0;
-  TX_header.IDE = 0;
-  TX_header.RTR = 0;
-  TX_header.DLC = Length;
-
-  if(HAL_CAN_AddTxMessage(hcan, &TX_header, Data, &used_mailbox) != HAL_OK){
-    Error_Handler();
+  //找到空的发送邮箱 把数据发送出去
+  while (HAL_CAN_GetTxMailboxesFreeLevel(hcan) == 0);    // 如果三个发送邮箱都阻塞了就等待直到其中某个邮箱空闲
+  if ((hcan->Instance->TSR & CAN_TSR_TME0) != RESET) {
+      // 检查发送邮箱0状态 如果邮箱0空闲就将待发送数据放入FIFO0
+      TxMailboxX = CAN_TX_MAILBOX0;
+  } else if ((hcan->Instance->TSR & CAN_TSR_TME1) != RESET) {
+      TxMailboxX = CAN_TX_MAILBOX1;
+  } else if ((hcan->Instance->TSR & CAN_TSR_TME2) != RESET) {
+      TxMailboxX = CAN_TX_MAILBOX2;
   }
+
+  HAL_CAN_AddTxMessage(hcan, &TxHeader, Data, (uint32_t *)TxMailboxX);
 }
 
 

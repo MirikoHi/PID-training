@@ -3,7 +3,7 @@
 
 motor_t motor;
 
-void MOTOR_Init(motor_t motor, uint16_t ID){
+void MOTOR_Init(motor_t motor, uint8_t ID){
     motor.ID = ID;
 }
 
@@ -24,7 +24,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
         CAN_RxHeaderTypeDef RxHeader;
         uint8_t rx_data[8] = {0};
         if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, rx_data) == HAL_OK){
-            if(RxHeader.StdId - 0x200 == MOTOR_ID){
+            if(RxHeader.StdId - 0x200 == motor.ID){
                 MOTOR_Update(motor, rx_data);
             }
         }

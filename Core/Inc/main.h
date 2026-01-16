@@ -61,6 +61,7 @@ float map(float input, float imin, float imax, float omin, float omax);
 
 /* USER CODE BEGIN Private defines */
 extern const int MOTOR_ID;
+extern float speed_target;
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

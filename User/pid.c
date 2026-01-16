@@ -4,8 +4,7 @@
 
 PID_t pid;
 
-void PID_init(PID_t *pid, float Kp, float Ki, float Kd, float max_out, float min_out, float max_iout)
-{
+void PID_init(PID_t *pid, float Kp, float Ki, float Kd, float max_out, float min_out, float max_iout){
     pid->Kp = Kp;
     pid->Ki = Ki;
     pid->Kd = Kd;
@@ -17,21 +16,19 @@ void PID_init(PID_t *pid, float Kp, float Ki, float Kd, float max_out, float min
     PID_clear(pid);
 }
 
-void PID_clear(PID_t *pid)
-{
+void PID_clear(PID_t *pid){
     pid->out = 0.0F;
     pid->Pout = 0.0F;
     pid->Iout = 0.0F;
     pid->Dout = 0.0F;
     pid->target = 0.0F;
 
-    memset(pid->fb, 0.0F, 2);
-    memset(pid->Dbuf, 0.0F, 3);
-    memset(pid->error, 0.0F, 3);
+    memset(pid->fb, 0, sizeof(pid->fb));
+    memset(pid->Dbuf, 0, sizeof(pid->Dbuf));
+    memset(pid->error, 0, sizeof(pid->error));
 }
 
-float PID_calc(PID_t *pid, float target, float fb)
-{
+float PID_calc(PID_t *pid, float target, float fb){
     pid->target = target;
     pid->fb[1] = pid->fb[0];
     pid->fb[0] = fb;
@@ -70,3 +67,18 @@ float PID_calc(PID_t *pid, float target, float fb)
     pid->out = out;
     return pid->out;
 }
+
+// 1khz
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+    // 速度环
+    float cur = PID_calc(&pid, speed_target, motor.speed);
+    int16_t out = map(cur, -20, 20, -16384, 16384);
+
+
+    uint8_t data[8] = {0};
+    data[(motor.ID - 1) * 2] = out >> 8;
+    data[(motor.ID * 2 - 1)] = out;
+    CAN_Send_Data(&hcan1, 0x200, data, 8);
+}
+
+

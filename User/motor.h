@@ -12,7 +12,7 @@
  * @param angle 机械转子角度
  */
 typedef struct {
-    uint16_t ID;
+    uint8_t ID;
     float current;
     float speed;
     float angle;
@@ -22,6 +22,6 @@ typedef struct {
 } motor_t;
 
 extern motor_t motor;
-void MOTOR_Init(motor_t motor, uint16_t ID);
+void MOTOR_Init(motor_t motor, uint8_t ID);
 void MOTOR_Update(motor_t motor, uint8_t *data);
 #endif
