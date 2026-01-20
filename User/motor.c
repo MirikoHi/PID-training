@@ -1,7 +1,6 @@
 #include "motor.h"
 #include "can.h"
 
-motor_t motor;
 
 void MOTOR_Init(motor_t motor, uint8_t ID){
     motor.ID = ID;

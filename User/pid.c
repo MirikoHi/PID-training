@@ -1,10 +1,11 @@
 #include "pid.h"
 #include "can.h"
 #include <string.h>
+#include <math.h>
 
-PID_t pid;
+// PID_t pid;
 
-void PID_init(PID_t *pid, float Kp, float Ki, float Kd, float max_out, float min_out, float max_iout){
+void PID_init(PID_t *pid, float Kp, float Ki, float Kd, float max_out, float min_out, float max_iout, float itrigger){
     pid->Kp = Kp;
     pid->Ki = Ki;
     pid->Kd = Kd;
@@ -12,6 +13,7 @@ void PID_init(PID_t *pid, float Kp, float Ki, float Kd, float max_out, float min
     pid->max_out = max_out;
     pid->min_out = min_out;
     pid->max_iout = max_iout;
+    pid->itrigger = itrigger;
 
     PID_clear(pid);
 }
@@ -42,18 +44,37 @@ float PID_calc(PID_t *pid, float target, float fb){
     pid->Pout = pid->Kp * pid->error[0];
 
     // I积分项
-    pid->Iout += pid->Ki * pid->error[0];
-    if(pid->Iout > pid->max_iout){
-        pid->Iout = pid->max_iout;
+    if(select & 0b000100){
+        pid->Iout += pid->Ki * (pid->error[0] + pid->error[1]) / 2.0F;
     }
-    else if(pid->Iout < -pid->max_iout){
-        pid->Iout = -pid->max_iout;
+    else{
+        pid->Iout += pid->Ki * pid->error[0];
+    }
+
+    if(select & 0b010000){
+        if(fabs(pid->error[0]) > pid->itrigger){
+            pid->Iout = 0;
+        }
+    }
+
+    if(select & 0b100000){
+        if(pid->Iout > pid->max_iout){
+            pid->Iout = pid->max_iout;
+        }
+        else if(pid->Iout < -pid->max_iout){
+            pid->Iout = -pid->max_iout;
+        }
     }
 
     // D微分项
     pid->Dbuf[2] = pid->Dbuf[1];
     pid->Dbuf[1] = pid->Dbuf[0];
-    pid->Dbuf[0] = pid->error[0] - pid->error[1];
+    if(select & 0b001000){
+        pid->Dbuf[0] = pid->fb[0] - pid->fb[1];
+    }
+    else{
+        pid->Dbuf[0] = pid->error[0] - pid->error[1];
+    }
     pid->Dout = pid->Kd * pid->Dbuf[0];
 
     float out = pid->Pout + pid->Iout + pid->Dout;
@@ -68,17 +89,34 @@ float PID_calc(PID_t *pid, float target, float fb){
     return pid->out;
 }
 
-// 1khz
+// 1khz TIM2
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-    // 速度环
-    float cur = PID_calc(&pid, speed_target, motor.speed);
-    int16_t out = map(cur, -20, 20, -16384, 16384);
+    if(htim->Instance == TIM2){
+        float cur = 0;
+        if((select & 0b11) == 0b10){
+            // 位置环
+            cur = PID_calc(&Lpid, diration_target, motor.angle);
+        }
 
+        if(select & 0b01){
+            // 速度环
+            cur = PID_calc(&Spid, speed_target, motor.speed);
+        }
+        int16_t out = map(cur, -20, 20, -16384, 16384);
 
-    uint8_t data[8] = {0};
-    data[(motor.ID - 1) * 2] = out >> 8;
-    data[(motor.ID * 2 - 1)] = out;
-    CAN_Send_Data(&hcan1, 0x200, data, 8);
+        if(motor.ID <= 4){
+            uint8_t data[8] = {0};
+            data[(motor.ID - 1) * 2] = out >> 8;
+            data[(motor.ID * 2 - 1)] = out;
+            CAN_Send_Data(&hcan1, 0x200, data, 8);
+        }
+        else if(motor.ID >= 5){
+            uint8_t data[8] = {0};
+            data[(motor.ID - 5) * 2] = out >> 8;
+            data[(motor.ID * 2 - 9)] = out;
+            CAN_Send_Data(&hcan1, 0x1FF, data, 8);
+        }
+    }
 }
 
 

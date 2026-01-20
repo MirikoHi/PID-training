@@ -21,13 +21,7 @@
 #include "can.h"
 
 /* USER CODE BEGIN 0 */
-#define CAN_FILTER(x) ((x) << 3)
-#define CAN_FIFO_0 0b000
-#define CAN_FIFO_1 0b100
-#define CAN_STDID 0b000
-#define CAN_EXTID 0b010
-#define CAN_DATA_TYPE 0b000
-#define CAN_REMOTE_TYPE 0b001
+
 /* USER CODE END 0 */
 
 CAN_HandleTypeDef hcan1;
@@ -187,7 +181,7 @@ void CAN_Send_Data(CAN_HandleTypeDef *hcan, uint16_t ID, uint8_t *Data, uint16_t
   TxHeader.DLC = Length;    // 数据长度码
 
   //找到空的发送邮箱 把数据发送出去
-  while (HAL_CAN_GetTxMailboxesFreeLevel(hcan) == 0);    // 如果三个发送邮箱都阻塞了就等待直到其中某个邮箱空闲
+  // while (HAL_CAN_GetTxMailboxesFreeLevel(hcan) == 0);    // 如果三个发送邮箱都阻塞了就等待直到其中某个邮箱空闲
   if ((hcan->Instance->TSR & CAN_TSR_TME0) != RESET) {
       // 检查发送邮箱0状态 如果邮箱0空闲就将待发送数据放入FIFO0
       TxMailboxX = CAN_TX_MAILBOX0;

@@ -35,7 +35,13 @@ extern "C" {
 extern CAN_HandleTypeDef hcan1;
 
 /* USER CODE BEGIN Private defines */
-
+#define CAN_FILTER(x) ((x) << 3)
+#define CAN_FIFO_0 0b000
+#define CAN_FIFO_1 0b100
+#define CAN_STDID 0b000
+#define CAN_EXTID 0b010
+#define CAN_DATA_TYPE 0b000
+#define CAN_REMOTE_TYPE 0b001
 /* USER CODE END Private defines */
 
 void MX_CAN1_Init(void);
