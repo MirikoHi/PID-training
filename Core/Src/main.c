@@ -48,7 +48,7 @@
 
 const int MOTOR_ID = 1;
 float speed_target = 0;
-float diration_target = 0;
+float position_target = 0;
 
 /**
  * @param 前馈

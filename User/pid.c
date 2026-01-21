@@ -119,11 +119,25 @@ float PID_calc(PID_t *pid, float target, float fb){
 
 // 1khz TIM2
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+    static uint8_t loop_counter = 0;
+
     if(htim->Instance == TIM2){
         float cur = 0;
+        if((select & 0b11) == 0b11){
+            // 位置-速度串级
+            loop_counter++;
+
+            if(loop_counter >= 5){ // 200hz
+                loop_counter = 0;
+                speed_target = PID_calc(&Lpid, position_target, motor.angle);
+            }
+
+            cur = PID_calc(&Spid, speed_target, motor.speed); // 1khz
+        }
+
         if((select & 0b11) == 0b10){
             // 位置环
-            cur = PID_calc(&Lpid, diration_target, motor.angle);
+            cur = PID_calc(&Lpid, position_target, motor.angle);
         }
 
         if((select & 0b11) == 0b01){

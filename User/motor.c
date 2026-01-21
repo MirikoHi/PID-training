@@ -8,7 +8,7 @@ void MOTOR_Init(motor_t motor, uint8_t ID){
 
 void MOTOR_Update(motor_t motor, uint8_t *data){
     uint16_t angle = (data[0] << 8 | data[1]);
-    uint16_t speed = (data[2] << 8 | data[3]);
+    int16_t speed = (data[2] << 8 | data[3]);
     int16_t current = (data[4] << 8 | data[5]);
 
     motor.angle = map(angle, 0, 8191, 0, 360);
