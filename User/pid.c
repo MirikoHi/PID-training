@@ -6,6 +6,7 @@
 // PID_t pid;
 
 /**
+ * @attention 设置min和max要根据输出目标设定
  * @param pid
  * @param Kp 比例项系数
  * @param Ki 积分项系数
