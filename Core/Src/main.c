@@ -47,7 +47,7 @@
 /* USER CODE BEGIN PV */
 
 const int MOTOR_ID = 1;
-float speed_target = 0;
+float speed_target = 0; // 9400rpm
 float position_target = 0;
 
 /**
@@ -106,10 +106,10 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+  MOTOR_Init(&motor, MOTOR_ID);
   CAN_Init(&hcan1);
   CAN_Filter_Config(&hcan1,CAN_FILTER(0) | CAN_FIFO_0 | CAN_STDID | CAN_DATA_TYPE, 0x200, 0x7F8);
-  MOTOR_Init(motor, MOTOR_ID);
-  PID_init(&Spid, 0, 0, 0, 0, -20, 20, 25, 1000);
+  PID_init(&Spid, 0, 0, 0, 0, -10, 10, 25, 1000);
   PID_init(&Lpid, 0, 0, 0, 0, 0, 360, 25, 1000);
   /* USER CODE END Init */
 
@@ -125,6 +125,7 @@ int main(void)
   MX_CAN1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  HAL_Delay(10);
   HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
