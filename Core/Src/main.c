@@ -51,6 +51,7 @@ float speed_target = 0;
 float diration_target = 0;
 
 /**
+ * @param 前馈
  * @param 积分限幅
  * @param 积分分离
  * @param 微分先行
@@ -58,7 +59,7 @@ float diration_target = 0;
  * @param 位置环
  * @param 速度环
  */
-uint8_t select = 0b000000;
+uint8_t select = 0b0000000;
 
 motor_t motor;
 PID_t Spid;
@@ -108,8 +109,8 @@ int main(void)
   CAN_Init(&hcan1);
   CAN_Filter_Config(&hcan1,CAN_FILTER(0) | CAN_FIFO_0 | CAN_STDID | CAN_DATA_TYPE, 0x200, 0x7F8);
   MOTOR_Init(motor, MOTOR_ID);
-  PID_init(&Spid, 0, 0, 0, 20, -20, 25, 1000);
-  PID_init(&Lpid, 0, 0, 0, 360, 0, 25, 1000);
+  PID_init(&Spid, 0, 0, 0, 0, -20, 20, 25, 1000);
+  PID_init(&Lpid, 0, 0, 0, 0, 0, 360, 25, 1000);
   /* USER CODE END Init */
 
   /* Configure the system clock */
