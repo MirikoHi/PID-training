@@ -2,7 +2,7 @@
 #include "can.h"
 #include <math.h>
 
-#define GEAR_RATIO 19
+#define GEAR_RATIO 19.2
 #define ENCODER_MAX 8191
 
 void MOTOR_Init(motor_t *motor, uint8_t ID){
@@ -10,6 +10,9 @@ void MOTOR_Init(motor_t *motor, uint8_t ID){
 }
 
 void MOTOR_Update(motor_t *motor, uint8_t *data){
+    if(motor == NULL || data == NULL){
+        return;
+    }
     uint16_t rotor_angle = (data[0] << 8 | data[1]);
     int16_t speed = (data[2] << 8 | data[3]);
     int16_t current = (data[4] << 8 | data[5]);

@@ -31,6 +31,14 @@ void PID_init(PID_t *pid, float Kp, float Ki, float Kd, float Kf, float min_out,
     PID_clear(pid);
 }
 
+void PID_set(PID_t *pid, float Kp, float Ki, float Kd, float Kf){
+    pid->Kp = Kp;
+    pid->Ki = Ki;
+    pid->Kd = Kd;
+    pid->Kf = Kf;
+
+}
+
 void PID_clear(PID_t *pid){
     pid->out = 0.0F;
     pid->Pout = 0.0F;
@@ -54,6 +62,15 @@ float PID_calc(PID_t *pid, float target, float fb){
     pid->error[2] = pid->error[1];
     pid->error[1] = pid->error[0];
     pid->error[0] = pid->target[0] - pid->fb[0];
+
+    if(select & 0b0000010){ // 位置环bug
+        if(pid->error[0] > 180){
+            pid->error[0] -= 360.0f;
+        }
+        else if(pid->error[0] < -180){
+            pid->error[0] += 360.0f;
+        }
+    }
 
     // P比例项
     pid->Pout = pid->Kp * pid->error[0];
@@ -98,11 +115,11 @@ float PID_calc(PID_t *pid, float target, float fb){
         pid->Fout = pid->Kf * pid->Fbuf;
         
         // 前馈限幅
-        if(pid->Fout > pid->max_out * 0.5F){  // 总输出的50%
-            pid->Fout = pid->max_out * 0.5F;
+        if(pid->Fout > pid->max_out * 0.8F){  // 总输出的80%
+            pid->Fout = pid->max_out * 0.8F;
         }
-        else if(pid->Fout < -pid->max_out * 0.5F){
-            pid->Fout = -pid->max_out * 0.5F;
+        else if(pid->Fout < -pid->max_out * 0.8F){
+            pid->Fout = -pid->max_out * 0.8F;
         }
     }
 
@@ -121,8 +138,13 @@ float PID_calc(PID_t *pid, float target, float fb){
 // 1khz TIM2
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     static uint8_t loop_counter = 0;
+    static float signal_counter = 0;
 
     if(htim->Instance == TIM2){
+        signal_counter+=0.5;
+        if(signal_counter > 2){
+            position_target = 60*sinf(signal_counter/1000)+140;
+        }
         float cur = 0;
         if((select & 0b11) == 0b11){
             // 位置-速度串级

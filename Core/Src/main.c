@@ -48,7 +48,7 @@
 
 const int MOTOR_ID = 1;
 float speed_target = 0; // 9400rpm
-float position_target = 0;
+float position_target = 269;
 
 /**
  * @param 前馈
@@ -59,11 +59,12 @@ float position_target = 0;
  * @param 位置环
  * @param 速度环
  */
-uint8_t select = 0b0000000;
+uint8_t select = 0b1100011;
 
 motor_t motor;
 PID_t Spid;
 PID_t Lpid;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,19 +75,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-float map(float input, float imin, float imax, float omin, float omax){
-  float output = 0.0f;
-  if(input <= imin){
-    output = omin;
-  }
-  else if(input >= imax){
-    output = omax;
-  }
-  else{
-    output = ((input - imin)/(imax - imin)) * (omax - omin) + omin;
-  }
-  return output;
-}
+
 /* USER CODE END 0 */
 
 /**
@@ -106,11 +95,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  MOTOR_Init(&motor, MOTOR_ID);
-  CAN_Init(&hcan1);
-  CAN_Filter_Config(&hcan1,CAN_FILTER(0) | CAN_FIFO_0 | CAN_STDID | CAN_DATA_TYPE, 0x200, 0x7F8);
-  PID_init(&Spid, 0, 0, 0, 0, -10, 10, 25, 1000);
-  PID_init(&Lpid, 0, 0, 0, 0, 0, 360, 25, 1000);
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -125,6 +110,13 @@ int main(void)
   MX_CAN1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  MOTOR_Init(&motor, MOTOR_ID);
+  CAN_Init(&hcan1);
+  CAN_Filter_Config(&hcan1,CAN_FILTER(0) | CAN_FIFO_0 | CAN_STDID | CAN_DATA_TYPE, 0x200, 0x000);
+  PID_init(&Spid, 0.01, 0.0003, 0.002, 0.01, -10, 10, 10, 1000);
+  PID_init(&Lpid, 55, 0.185, 0.04, 0, -5000, 5000, 1500, 90);
+
+
   HAL_Delay(10);
   HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
@@ -186,7 +178,19 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+float map(float input, float imin, float imax, float omin, float omax){
+  float output = 0.0f;
+  if(input <= imin){
+    output = omin;
+  }
+  else if(input >= imax){
+    output = omax;
+  }
+  else{
+    output = ((input - imin)/(imax - imin)) * (omax - omin) + omin;
+  }
+  return output;
+}
 /* USER CODE END 4 */
 
 /**

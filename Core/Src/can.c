@@ -71,18 +71,23 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
     /* CAN1 clock enable */
     __HAL_RCC_CAN1_CLK_ENABLE();
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOD_CLK_ENABLE();
     /**CAN1 GPIO Configuration
-    PA11     ------> CAN1_RX
-    PA12     ------> CAN1_TX
+    PD0     ------> CAN1_RX
+    PD1     ------> CAN1_TX
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_12;
+    GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+    /* CAN1 interrupt Init */
+    HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
+    HAL_NVIC_SetPriority(CAN1_RX1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
   /* USER CODE BEGIN CAN1_MspInit 1 */
 
   /* USER CODE END CAN1_MspInit 1 */
@@ -101,11 +106,14 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
     __HAL_RCC_CAN1_CLK_DISABLE();
 
     /**CAN1 GPIO Configuration
-    PA11     ------> CAN1_RX
-    PA12     ------> CAN1_TX
+    PD0     ------> CAN1_RX
+    PD1     ------> CAN1_TX
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
+    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_0|GPIO_PIN_1);
 
+    /* CAN1 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(CAN1_RX0_IRQn);
+    HAL_NVIC_DisableIRQ(CAN1_RX1_IRQn);
   /* USER CODE BEGIN CAN1_MspDeInit 1 */
 
   /* USER CODE END CAN1_MspDeInit 1 */
@@ -121,8 +129,18 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* canHandle)
  */
 void CAN_Init(CAN_HandleTypeDef *hcan)
 {
-  HAL_CAN_Start(hcan);
-  HAL_CAN_ActivateNotification(hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
+
+  HAL_CAN_Stop(hcan);
+
+  // 启动CAN
+  if(HAL_CAN_Start(hcan) != HAL_OK) {
+      Error_Handler();
+  }
+
+  // 激活接收中断
+  if(HAL_CAN_ActivateNotification(hcan, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
+      Error_Handler();
+  }
 }
 
 

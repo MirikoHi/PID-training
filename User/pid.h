@@ -33,6 +33,7 @@ extern PID_t Spid;
 extern PID_t Lpid;
 
 void PID_init(PID_t *pid, float Kp, float Ki, float Kd, float Kf, float min_out, float max_out, float max_iout, float itrigger);
+void PID_set(PID_t *pid, float Kp, float Ki, float Kd, float Kf);
 void PID_clear(PID_t *pid);
 float PID_calc(PID_t *pid, float target, float fb);
 
