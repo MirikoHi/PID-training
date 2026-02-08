@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "can.h"
+#include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -44,6 +45,25 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+const int MOTOR_ID = 1;
+float speed_target = 0; // 9400rpm
+float position_target = 269;
+
+/**
+ * @param 前馈
+ * @param 积分限幅
+ * @param 积分分离
+ * @param 微分先行
+ * @param 梯形积分
+ * @param 位置环
+ * @param 速度环
+ */
+uint8_t select = 0b1100011;
+
+motor_t motor;
+PID_t Spid;
+PID_t Lpid;
 
 /* USER CODE END PV */
 
@@ -88,8 +108,17 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_CAN1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  MOTOR_Init(&motor, MOTOR_ID);
+  CAN_Init(&hcan1);
+  CAN_Filter_Config(&hcan1,CAN_FILTER(0) | CAN_FIFO_0 | CAN_STDID | CAN_DATA_TYPE, 0x200, 0x000);
+  PID_init(&Spid, 0.01, 0.0003, 0.002, 0.01, -10, 10, 10, 1000);
+  PID_init(&Lpid, 55, 0.185, 0.04, 0, -5000, 5000, 1500, 90);
 
+
+  HAL_Delay(10);
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -125,7 +154,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 168;
+  RCC_OscInitStruct.PLL.PLLN = 160;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -149,7 +178,19 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+float map(float input, float imin, float imax, float omin, float omax){
+  float output = 0.0f;
+  if(input <= imin){
+    output = omin;
+  }
+  else if(input >= imax){
+    output = omax;
+  }
+  else{
+    output = ((input - imin)/(imax - imin)) * (omax - omin) + omin;
+  }
+  return output;
+}
 /* USER CODE END 4 */
 
 /**
